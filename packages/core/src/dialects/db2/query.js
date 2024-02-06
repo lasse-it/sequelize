@@ -147,7 +147,7 @@ export class Db2Query extends AbstractQuery {
       if (this.sql.startsWith('DELETE FROM ')) {
         affectedRows = result.getAffectedRowsSync();
       } else {
-        data = result.fetchAllSync();
+        data = await result.fetchAll();
         metadata = result.getColumnMetadataSync();
       }
 
