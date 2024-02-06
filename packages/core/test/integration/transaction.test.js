@@ -1001,6 +1001,10 @@ describe(Support.getTestDialectTeaser('Transaction'), () => {
         await this.sequelize.transaction(t1 => {
 
           if (current.dialect.supports.lockOuterJoinFailure) {
+            let expectedRejection = 'FOR UPDATE cannot be applied to the nullable side of an outer join';
+            if (current.dialect.name === 'db2') {
+              expectedRejection = 'SQL0511N  The FOR UPDATE clause is not allowed because the table specified by the cursor cannot be modified.  SQLSTATE=42829';
+            }
 
             return expect(User.findOne({
               where: {
@@ -1009,7 +1013,7 @@ describe(Support.getTestDialectTeaser('Transaction'), () => {
               include: [Task],
               lock: t1.LOCK.UPDATE,
               transaction: t1,
-            })).to.be.rejectedWith('FOR UPDATE cannot be applied to the nullable side of an outer join');
+            })).to.be.rejectedWith(expectedRejection);
           }
 
           return User.findOne({
