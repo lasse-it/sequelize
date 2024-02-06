@@ -629,8 +629,6 @@ export class Db2QueryGenerator extends Db2QueryGeneratorTypeScript {
     return '';
   }
 
-  setIsolationLevelQuery() {}
-
   generateTransactionId() {
     return randomBytes(10).toString('hex');
   }

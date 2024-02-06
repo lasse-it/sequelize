@@ -8,6 +8,7 @@ import clone from 'lodash/clone';
 import intersection from 'lodash/intersection';
 import isPlainObject from 'lodash/isPlainObject';
 import mapValues from 'lodash/mapValues';
+import { IsolationLevel, Transaction } from '../../transaction';
 
 const { Op } = require('../../operators');
 const { QueryTypes } = require('../../query-types');
@@ -137,5 +138,30 @@ export class Db2QueryInterface extends Db2QueryInterfaceTypeScript {
   async executeTableReorg(tableName) {
     // https://www.ibm.com/support/pages/sql0668n-operating-not-allowed-reason-code-7-seen-when-querying-or-viewing-table-db2-warehouse-cloud-and-db2-cloud
     return await this.sequelize.query(`CALL SYSPROC.ADMIN_CMD('REORG TABLE ${this.queryGenerator.quoteTable(tableName)}')`);
+  }
+
+  getIsolationLevel(value) {
+    switch (value) {
+      case IsolationLevel.READ_UNCOMMITTED:
+        return 1;
+      case IsolationLevel.READ_COMMITTED:
+        return 2;
+      case IsolationLevel.REPEATABLE_READ:
+        return 4;
+      case IsolationLevel.SERIALIZABLE:
+        return 8;
+      default:
+        throw new Error(`Unknown isolation level: ${value}`);
+    }
+  }
+
+  setIsolationLevel(transaction, value, _options) {
+    if (!transaction || !(transaction instanceof Transaction)) {
+      throw new TypeError('Unable to set a transaction isolation level without transaction object!');
+    }
+
+    const isolationLevel = this.getIsolationLevel(value);
+
+    return transaction.getConnection().setIsolationLevel(isolationLevel);
   }
 }
