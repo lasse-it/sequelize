@@ -60,6 +60,7 @@ export class PostgresDialect extends AbstractDialect {
       DECIMAL: { unconstrained: true, NaN: true, infinity: true },
       CIDR: true,
       MACADDR: true,
+      MACADDR8: true,
       INET: true,
     },
     jsonOperations: true,
@@ -96,6 +97,9 @@ export class PostgresDialect extends AbstractDialect {
       cascade: true,
       ifExists: true,
     },
+    startTransaction: {
+      readOnly: true,
+    },
     delete: {
       modelWithLimit: true,
     },
@@ -114,15 +118,9 @@ export class PostgresDialect extends AbstractDialect {
 
   constructor(sequelize: Sequelize) {
     super(sequelize, DataTypes, 'postgres');
-    this.connectionManager = new PostgresConnectionManager(this, sequelize);
-    this.queryGenerator = new PostgresQueryGenerator({
-      dialect: this,
-      sequelize,
-    });
-    this.queryInterface = new PostgresQueryInterface(
-      sequelize,
-      this.queryGenerator,
-    );
+    this.connectionManager = new PostgresConnectionManager(this);
+    this.queryGenerator = new PostgresQueryGenerator(this);
+    this.queryInterface = new PostgresQueryInterface(this);
 
     registerPostgresDbDataTypeParsers(this);
   }
@@ -141,7 +139,8 @@ export class PostgresDialect extends AbstractDialect {
   escapeString(value: string): string {
     // http://www.postgresql.org/docs/8.2/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS
     // http://stackoverflow.com/q/603572/130598
-    value = value.replaceAll('\'', '\'\'')
+    value = value
+      .replaceAll("'", "''")
       // null character is not allowed in Postgres
       .replaceAll('\0', '\\0');
 
