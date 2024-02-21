@@ -57,6 +57,12 @@ describe('Transaction', () => {
     });
   });
 
+  // Db2QueryInterface#setIsolationLevel does not pass "SET TRANSACTION ISOLATION LEVEL" queries to queryRaw.
+  // Instead, it calls setIsolationLevel directly on the connection
+  if (dialectName === 'db2') {
+    return;
+  }
+
   it('should set isolation level correctly', async () => {
     const expectations: Record<string, string[]> = {
       all: [
